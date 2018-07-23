@@ -11,21 +11,17 @@ module.exports = function(content) {
     rewritePath: undefined,
     relativePath: false
   };
-  // Parse query
-  var query = loaderUtils.getOptions(this) || {};
-  var options = this.options[query.config || "nodeAddonLoader"] || {};
-  // options takes precedence over config
-  Object.keys(options).forEach(function(attr) {
-    config[attr] = options[attr];
-  });
-  // query takes precedence over config and options
+  var query = this.query;
+  var context = this.rootContext;
+
+  // query takes precedence over config
   Object.keys(query).forEach(function(attr) {
     config[attr] = query[attr];
   });
 
   // Build the output file name
   var url = loaderUtils.interpolateName(this, config.name, {
-    context: this.options.context,
+    context: context,
     content: content
   });
 
@@ -40,13 +36,16 @@ module.exports = function(content) {
   if (config.rewritePath) {
     finalUrl = JSON.stringify(path.join(config.rewritePath, url));
   } else if (config.basePath) {
-    var basePath = path.relative(config.basePath, this.options.output.path);
+    var basePath = path.relative(
+      config.basePath,
+      this._compiler.options.output.path
+    );
     finalUrl = JSON.stringify(path.join(basePath, url));
   } else {
     finalUrl = "__webpack_public_path__ + " + JSON.stringify(url);
   }
   if (config.relativePath) {
-    finalUrl = "__dirname + \"/\" + " + finalUrl;
+    finalUrl = '__dirname + "/" + ' + finalUrl;
   }
   return (
     "try { global.process.dlopen(module, " +
